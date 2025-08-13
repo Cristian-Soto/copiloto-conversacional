@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pymupdf
+langchain
+chromadb
+sentence-transformers
+python-multipart
+pydantic
+requests
