@@ -85,7 +85,7 @@ def fragment_text_content(content: str, fragment_size: int = 1000, fragment_over
         List[str]: Lista de fragmentos de texto
     """
     try:
-        # NOTE: Usando separadores jerárquicos para mejor fragmentación
+        #Usando separadores jerárquicos para mejor fragmentación
         content_splitter = RecursiveCharacterTextSplitter(
             chunk_size=fragment_size,
             chunk_overlap=fragment_overlap,

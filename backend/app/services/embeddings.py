@@ -26,7 +26,7 @@ class EmbeddingManager:
             List[List[float]]: Lista de vectores embedding
         """
         try:
-            # TODO: Optimizar para documentos muy grandes
+            #Optimizar para documentos muy grandes
             vector_embeddings = self.transformer_model.encode(text_chunks)
             return vector_embeddings.tolist()
         except Exception as e:

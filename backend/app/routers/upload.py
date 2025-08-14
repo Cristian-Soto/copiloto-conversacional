@@ -32,17 +32,17 @@ async def process_pdf_upload(uploaded_file: UploadFile = File(...)):
         temporary_path = temp_file.name
     
     try:
-        # STEP 1: Extraer contenido textual del PDF
+        #Extraer contenido textual del PDF
         document_text = extract_text_content(temporary_path)
         document_metadata = extract_document_metadata(temporary_path)
         
-        # STEP 2: Fragmentar el contenido en chunks procesables
+        #Fragmentar el contenido en chunks procesables
         text_fragments = process_pdf_document(temporary_path, fragment_size=1000, fragment_overlap=200)
         
-        # STEP 3: Generar vectores embedding para los fragmentos
+        #Generar vectores embedding para los fragmentos
         embedding_vectors = document_embedding_manager.create_embeddings(text_fragments)
         
-        # STEP 4: Preparar metadatos detallados para cada fragmento
+        #Preparar metadatos detallados para cada fragmento
         fragments_metadata = []
         for fragment_index, fragment_text in enumerate(text_fragments):
             fragment_meta = {
@@ -58,7 +58,7 @@ async def process_pdf_upload(uploaded_file: UploadFile = File(...)):
             }
             fragments_metadata.append(fragment_meta)
         
-        # STEP 5: Almacenar en base de datos vectorial
+        #Almacenar en base de datos vectorial
         stored_fragment_ids = vector_db.store_document_chunks(text_fragments, embedding_vectors, fragments_metadata)
         
         # Limpiar archivo temporal

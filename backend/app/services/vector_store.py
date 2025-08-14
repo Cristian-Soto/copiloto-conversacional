@@ -16,14 +16,14 @@ class VectorDatabase:
             db_port (int): Puerto del servidor ChromaDB
         """
         try:
-            # FIXME: Agregar retry logic para conexión
+            #Agregar retry logic para conexión
             self.chroma_client = chromadb.HttpClient(
                 host=db_host,
                 port=db_port,
                 settings=Settings(allow_reset=True)
             )
             
-            # NOTE: Usando colección específica para documentos PDF
+            #Usando colección específica para documentos PDF
             self.document_collection_name = "processed_documents"
             self.doc_collection = self.chroma_client.get_or_create_collection(
                 name=self.document_collection_name,
@@ -46,7 +46,7 @@ class VectorDatabase:
             List[str]: Identificadores únicos generados
         """
         try:
-            # Generación de IDs únicos para cada fragmento
+            #Generación de IDs únicos para cada fragmento
             chunk_ids = [str(uuid.uuid4()) for _ in text_fragments]
             
             # Almacenar en la colección vectorial
