@@ -6,6 +6,8 @@ services:
       - "8000:8000"
     env_file:
       - .env.example
+    volumes:
+      - ./backend:/app
     depends_on:
       - chromadb
   frontend:
@@ -14,6 +16,8 @@ services:
       - "8501:8501"
     env_file:
       - .env.example
+    volumes:
+      - ./frontend:/app
     depends_on:
       - backend
   chromadb:

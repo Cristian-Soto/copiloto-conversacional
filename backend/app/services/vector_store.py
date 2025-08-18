@@ -29,8 +29,33 @@ class VectorDatabase:
                 name=self.document_collection_name,
                 metadata={"description": "Documentos PDF procesados y vectorizados"}
             )
+            self.connected = True
+            print(f"✅ Conectado exitosamente a ChromaDB en {db_host}:{db_port}")
         except Exception as e:
-            raise Exception(f"Error conectando a la base vectorial: {str(e)}")
+            self.connected = False
+            self.chroma_client = None
+            self.doc_collection = None
+            print(f"⚠️ No se pudo conectar a ChromaDB: {str(e)}")
+            print("🔄 La conexión se intentará automáticamente en las operaciones")
+    
+    def ensure_connection(self):
+        """Asegura que hay conexión antes de realizar operaciones."""
+        if not self.connected:
+            try:
+                self.chroma_client = chromadb.HttpClient(
+                    host="chromadb",
+                    port=8000,
+                    settings=Settings(allow_reset=True)
+                )
+                
+                self.doc_collection = self.chroma_client.get_or_create_collection(
+                    name=self.document_collection_name,
+                    metadata={"description": "Documentos PDF procesados y vectorizados"}
+                )
+                self.connected = True
+                print("✅ Reconectado a ChromaDB exitosamente")
+            except Exception as e:
+                raise Exception(f"ChromaDB no está disponible: {str(e)}")
     
     def store_document_chunks(self, text_fragments: List[str], embedding_vectors: List[List[float]], 
                              chunk_metadata: List[Dict[str, Any]]) -> List[str]:
@@ -46,6 +71,9 @@ class VectorDatabase:
             List[str]: Identificadores únicos generados
         """
         try:
+            # Asegurar conexión antes de la operación
+            self.ensure_connection()
+            
             #Generación de IDs únicos para cada fragmento
             chunk_ids = [str(uuid.uuid4()) for _ in text_fragments]
             
@@ -73,6 +101,9 @@ class VectorDatabase:
             Dict[str, Any]: Resultados de similitud
         """
         try:
+            # Asegurar conexión antes de la operación
+            self.ensure_connection()
+            
             similarity_results = self.doc_collection.query(
                 query_embeddings=[query_vector],
                 n_results=max_results
@@ -89,14 +120,35 @@ class VectorDatabase:
             Dict[str, Any]: Estado de la base de datos
         """
         try:
+            if not self.connected:
+                return {
+                    "connected": False,
+                    "collection_name": self.document_collection_name,
+                    "total_chunks": 0,
+                    "error": "No conectado a ChromaDB"
+                }
+            
             total_documents = self.doc_collection.count()
             return {
+                "connected": True,
                 "collection_name": self.document_collection_name,
                 "total_chunks": total_documents,
                 "collection_metadata": self.doc_collection.metadata
             }
         except Exception as e:
-            raise Exception(f"Error obteniendo estado de BD: {str(e)}")
+            return {
+                "connected": False,
+                "error": f"Error obteniendo estado de BD: {str(e)}"
+            }
+    
+    def get_database_info(self) -> Dict[str, Any]:
+        """
+        Alias para get_database_status para compatibilidad.
+        
+        Returns:
+            Dict[str, Any]: Información de la base de datos
+        """
+        return self.get_database_status()
     
     def remove_document_by_name(self, document_name: str) -> bool:
         """
@@ -120,6 +172,73 @@ class VectorDatabase:
             return False
         except Exception as e:
             raise Exception(f"Error eliminando documento: {str(e)}")
+    
+    def get_all_documents_sample(self, limit: int = 20) -> List[Dict[str, Any]]:
+        """
+        Obtiene una muestra de documentos de la base de datos.
+        
+        Args:
+            limit (int): Número máximo de documentos a retornar
+            
+        Returns:
+            List[Dict[str, Any]]: Lista de documentos con contenido y metadatos
+        """
+        try:
+            if not self.ensure_connection():
+                return []
+            
+            # Obtener documentos de la colección
+            results = self.doc_collection.get(
+                limit=limit,
+                include=["documents", "metadatas"]
+            )
+            
+            documents = []
+            if results and results.get("documents"):
+                for i, content in enumerate(results["documents"]):
+                    metadata = results.get("metadatas", [{}])[i] if i < len(results.get("metadatas", [])) else {}
+                    
+                    documents.append({
+                        "content": content,
+                        "metadata": metadata,
+                        "id": results.get("ids", [None])[i] if i < len(results.get("ids", [])) else None
+                    })
+            
+            return documents
+            
+        except Exception as e:
+            print(f"⚠️ Error obteniendo muestra de documentos: {str(e)}")
+            return []
+    
+    def get_unique_documents_metadata(self) -> List[Dict[str, Any]]:
+        """
+        Obtiene metadatos únicos de documentos (sin duplicar por fragmentos).
+        
+        Returns:
+            List[Dict[str, Any]]: Lista de metadatos únicos de documentos
+        """
+        try:
+            if not self.ensure_connection():
+                return []
+            
+            # Obtener todos los metadatos
+            results = self.doc_collection.get(include=["metadatas"])
+            
+            if not results or not results.get("metadatas"):
+                return []
+            
+            # Extraer documentos únicos por filename
+            unique_docs = {}
+            for metadata in results["metadatas"]:
+                filename = metadata.get("filename", "unknown")
+                if filename not in unique_docs:
+                    unique_docs[filename] = metadata
+            
+            return list(unique_docs.values())
+            
+        except Exception as e:
+            print(f"⚠️ Error obteniendo metadatos únicos: {str(e)}")
+            return []
 
 # Instancia global de la base de datos vectorial
 vector_db = VectorDatabase()

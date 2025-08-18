@@ -19,7 +19,7 @@ app.add_middleware(
 
 # Registrar routers
 app.include_router(upload.router, prefix="", tags=["upload"])
-app.include_router(chat.router, prefix="", tags=["chat"])
+app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 
 @app.get("/")
 async def root():
