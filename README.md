@@ -360,11 +360,6 @@ stateDiagram-v2
 ```
 copiloto-conversacional/
 │
-├── 🐳 Docker & Configuración
-│   ├── docker-compose.yml          # Orquestación completa
-│   ├── .env.example               # Variables de entorno
-│   └── .gitignore                 # Archivos excluidos
-│
 ├── 🔧 Backend (FastAPI)
 │   ├── app/
 │   │   ├── main.py                # Aplicación principal
@@ -390,12 +385,18 @@ copiloto-conversacional/
 │   ├── requirements.txt           # Dependencias frontend
 │   └── Dockerfile                # Imagen frontend
 │
-└── 📚 Documentación
-    ├── README.md                  # Este archivo
-    └── tests/                     # Tests automatizados
-        ├── test_basic.py          # Tests de integración
-        ├── requirements.txt       # Dependencias de testing
-        └── README.md              # Guía de testing
+├──tests/                     # Tests automatizados
+│      ├── test_basic.py          # Tests de integración
+│      ├── requirements.txt       # Dependencias de testing
+│      └── README.md              # Guía de testing
+|
+├── .env.example               # Variables de entorno
+|
+├── .gitignore                 # Archivos excluidos
+│
+├── docker-compose.yml         # Orquestación completa
+|
+└── README.md                  # Este archivo
 ```
 
 ## 🤝 Contribución
