@@ -185,6 +185,9 @@ docker-compose logs frontend
 
 # Limpiar sistema (elimina datos)
 docker-compose down -v
+
+# Ejecutar tests básicos (opcional)
+cd tests && pip install -r requirements.txt && pytest test_basic.py -v
 ```
 
 ## 💬 Flujo Conversacional
@@ -390,6 +393,9 @@ copiloto-conversacional/
 └── 📚 Documentación
     ├── README.md                  # Este archivo
     └── tests/                     # Tests automatizados
+        ├── test_basic.py          # Tests de integración
+        ├── requirements.txt       # Dependencias de testing
+        └── README.md              # Guía de testing
 ```
 
 ## 🤝 Contribución
