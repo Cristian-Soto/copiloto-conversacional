@@ -363,6 +363,7 @@ settings.json
 start_*.sh
 start_*.ps1
 start_*.bat
+start_server.py
 test_*.py
 debug_*.py
 
