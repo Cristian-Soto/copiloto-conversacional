@@ -267,50 +267,53 @@ COMPARACIÓN:"""
     def _generate_with_ollama_direct(self, question: str, context_text: str, 
                                    context_fragments: List[Dict[str, Any]], max_tokens: int) -> Dict[str, Any]:
         """Genera respuesta usando Ollama directamente."""
-        system_prompt = """Eres un asistente especializado en análisis de documentos. Responde basándote únicamente en el contexto proporcionado.
+        try:
+            system_prompt = """Eres un asistente de análisis de documentos. Responde basándote SOLO en el contexto proporcionado.
 
-INSTRUCCIONES:
-- Responde únicamente con información del contexto proporcionado
-- Si el contexto no contiene información suficiente, indícalo claramente
-- Mantén un tono profesional y conciso
-- Cita el documento específico cuando sea relevante"""
+REGLAS:
+- Solo usa información del contexto
+- Si no hay información suficiente, dilo claramente
+- Sé conciso y directo"""
 
-        user_prompt = f"""CONTEXTO:
+            user_prompt = f"""CONTEXTO:
 {context_text}
 
 PREGUNTA: {question}
 
-RESPUESTA:"""
+RESPUESTA BASADA EN EL CONTEXTO:"""
 
-        payload = {
-            "model": self.model_name,
-            "prompt": f"{system_prompt}\n\n{user_prompt}",
-            "stream": False,
-            "options": {
-                "num_predict": max_tokens,
-                "temperature": 0.7,
-                "top_p": 0.9
+            payload = {
+                "model": self.model_name,
+                "prompt": f"{system_prompt}\n\n{user_prompt}",
+                "stream": False,
+                "options": {
+                    "num_predict": 200,  # Reducir para respuestas más rápidas
+                    "temperature": 0.7,
+                    "top_p": 0.9
+                }
             }
-        }
-        
-        response = requests.post(self.generate_url, json=payload, timeout=30)
-        
-        if response.status_code == 200:
-            response_data = response.json()
-            generated_text = response_data.get("response", "").strip()
             
-            return {
-                "success": True,
-                "response": generated_text,
-                "method": "ollama_direct",
-                "model_used": self.model_name,
-                "context_fragments_used": len(context_fragments),
-                "langchain_used": False,
-                "tokens_used": response_data.get("eval_count", 0),
-                "generation_time": response_data.get("total_duration", 0) / 1e9 if response_data.get("total_duration") else 0
-            }
-        else:
-            raise Exception(f"Error HTTP {response.status_code}")
+            response = requests.post(self.generate_url, json=payload, timeout=90)
+            
+            if response.status_code == 200:
+                response_data = response.json()
+                generated_text = response_data.get("response", "").strip()
+                
+                return {
+                    "success": True,
+                    "response": generated_text,
+                    "method": "ollama_direct",
+                    "model_used": self.model_name,
+                    "context_fragments_used": len(context_fragments),
+                    "langchain_used": False,
+                    "tokens_used": response_data.get("eval_count", 0),
+                    "generation_time": response_data.get("total_duration", 0) / 1e9 if response_data.get("total_duration") else 0
+                }
+            else:
+                raise Exception(f"Error HTTP {response.status_code}: {response.text}")
+                
+        except Exception as e:
+            raise e
     
     def generate_document_summary(self, document_content: str) -> Dict[str, Any]:
         """
@@ -464,10 +467,15 @@ COMPARACIÓN:"""
         """Construye contexto estructurado a partir de fragmentos."""
         context_parts = []
         
-        for i, fragment in enumerate(fragments[:5]):  # Límite de 5 fragmentos
+        for i, fragment in enumerate(fragments[:3]):  # Límite de 3 fragmentos para reducir tamaño
             filename = fragment.get('metadata', {}).get('filename', f'Documento_{i+1}')
             content = fragment.get('content', '')
             similarity = fragment.get('similarity_score', 0)
+            
+            # Truncar contenido si es muy largo
+            max_content_length = 800  # Reducir longitud máxima
+            if len(content) > max_content_length:
+                content = content[:max_content_length] + "..."
             
             context_part = f"""[DOCUMENTO: {filename}]
 [RELEVANCIA: {similarity:.3f}]
@@ -501,4 +509,12 @@ COMPARACIÓN:"""
         }
 
 # Instancia global del servicio LLM
-local_llm_service = LocalLLMService()
+ollama_host = os.getenv("OLLAMA_HOST", "ollama")
+ollama_port = int(os.getenv("OLLAMA_PORT", "11434"))
+ollama_model = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
+
+local_llm_service = LocalLLMService(
+    ollama_host=ollama_host,
+    ollama_port=ollama_port,
+    model_name=ollama_model
+)

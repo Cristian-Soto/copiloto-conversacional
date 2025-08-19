@@ -1,0 +1,43 @@
+# Git attributes para manejo de archivos
+
+# Archivos de licencia y copyright
+LICENSE text
+COPYRIGHT.md text
+COMMERCIAL_LICENSE.md text
+NOTICE.md text
+
+# Archivos de código
+*.py text
+*.js text
+*.css text
+*.html text
+*.md text
+*.yml text
+*.yaml text
+*.json text
+*.txt text
+
+# Archivos Docker
+Dockerfile text
+docker-compose.yml text
+docker-compose.yaml text
+
+# Archivos de configuración
+*.env text
+*.ini text
+*.cfg text
+*.conf text
+
+# Archivos binarios
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+
+# Estadísticas de lenguajes (ignorar archivos de dependencias)
+node_modules/* linguist-vendored
+__pycache__/* linguist-generated
+*.pyc linguist-generated
+.dockerignore linguist-documentation

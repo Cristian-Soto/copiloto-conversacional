@@ -86,6 +86,193 @@ async def chat_status():
             content={"error": f"Error verificando estado del chat: {str(e)}"}
         )
 
+@router.get("/documents")
+async def list_documents():
+    """Obtiene la lista de documentos procesados en el sistema."""
+    try:
+        # Obtener todos los documentos de muestra (aumentamos el límite)
+        all_docs_sample = vector_db.get_all_documents_sample(limit=200)
+        
+        # Obtener estadísticas generales
+        db_status = vector_db.get_database_status()
+        
+        # Procesar documentos únicos y calcular estadísticas
+        unique_docs = {}
+        fragment_counts = {}
+        
+        for doc in all_docs_sample:
+            metadata = doc.get("metadata", {})
+            filename = metadata.get("filename", "unknown")
+            
+            # Contar fragmentos
+            fragment_counts[filename] = fragment_counts.get(filename, 0) + 1
+            
+            # Mantener solo un documento único por filename
+            if filename not in unique_docs:
+                unique_docs[filename] = {
+                    "filename": filename,
+                    "upload_date": metadata.get("upload_date", "Fecha no disponible"),
+                    "file_size": metadata.get("file_size", 0),
+                    "total_pages": metadata.get("total_pages", 0),
+                    "content_preview": doc.get("content", "")[:200] + "..." if len(doc.get("content", "")) > 200 else doc.get("content", ""),
+                    "fragment_count": 0  # Se actualizará después
+                }
+        
+        # Actualizar conteos de fragmentos
+        for filename, doc_info in unique_docs.items():
+            doc_info["fragment_count"] = fragment_counts.get(filename, 0)
+        
+        # Convertir a lista y ordenar por fecha
+        processed_docs = list(unique_docs.values())
+        try:
+            processed_docs.sort(key=lambda x: x.get('upload_date', ''), reverse=True)
+        except:
+            pass  # Si hay error en el ordenamiento, continúa sin ordenar
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "documents": processed_docs,
+                "total_documents": len(processed_docs),
+                "total_fragments": db_status.get("total_chunks", 0),
+                "database_status": db_status
+            }
+        )
+        
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": f"Error obteniendo lista de documentos: {str(e)}",
+                "documents": [],
+                "total_documents": 0,
+                "total_fragments": 0
+            }
+        )
+
+@router.delete("/documents/{document_name}")
+async def delete_document(document_name: str):
+    """Elimina un documento específico y todos sus fragmentos."""
+    try:
+        # Intentar eliminar el documento
+        success = vector_db.remove_document_by_name(document_name)
+        
+        if success:
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "success": True,
+                    "message": f"Documento '{document_name}' eliminado exitosamente",
+                    "document_name": document_name
+                }
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={
+                    "success": False,
+                    "error": f"No se encontró el documento '{document_name}'"
+                }
+            )
+            
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": f"Error eliminando documento: {str(e)}"
+            }
+        )
+
+@router.delete("/documents")
+async def clear_all_documents():
+    """Elimina todos los documentos de la base de datos."""
+    try:
+        result = vector_db.clear_all_documents()
+        
+        if result.get("success", False):
+            return JSONResponse(
+                status_code=200,
+                content=result
+            )
+        else:
+            return JSONResponse(
+                status_code=500,
+                content=result
+            )
+            
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": f"Error limpiando base de datos: {str(e)}"
+            }
+        )
+
+@router.get("/documents/{document_name}/fragments")
+async def get_document_fragments(document_name: str):
+    """Obtiene información detallada de fragmentos de un documento específico."""
+    try:
+        result = vector_db.get_document_fragments_info(document_name)
+        
+        if result.get("success", False):
+            return JSONResponse(
+                status_code=200,
+                content=result
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content=result
+            )
+            
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": f"Error obteniendo fragmentos: {str(e)}"
+            }
+        )
+
+@router.delete("/fragments")
+async def delete_fragments(fragment_ids: List[str]):
+    """Elimina fragmentos específicos por sus IDs."""
+    try:
+        if not fragment_ids:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "error": "Se requiere una lista de IDs de fragmentos"
+                }
+            )
+        
+        result = vector_db.delete_fragments_by_ids(fragment_ids)
+        
+        if result.get("success", False):
+            return JSONResponse(
+                status_code=200,
+                content=result
+            )
+        else:
+            return JSONResponse(
+                status_code=400,
+                content=result
+            )
+            
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": f"Error eliminando fragmentos: {str(e)}"
+            }
+        )
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat_with_documents(request: ChatRequest):
     """
@@ -93,19 +280,27 @@ async def chat_with_documents(request: ChatRequest):
     Busca documentos relevantes y genera respuesta con contexto.
     """
     try:
+        print(f"🔍 Chat request recibido: {request.question}")
+        
         # Buscar contexto relevante
+        print("📚 Buscando contexto relevante...")
         search_result = contextual_retriever.search_relevant_context(
             query=request.question,
             max_results=request.max_results,
             similarity_threshold=request.similarity_threshold
         )
         
+        print(f"🔎 Resultado de búsqueda: {search_result.get('success', False)}")
+        
         if not search_result["success"]:
+            print(f"❌ Error en búsqueda: {search_result.get('error', 'Unknown error')}")
             raise HTTPException(status_code=500, detail=search_result["error"])
         
         context_fragments = search_result.get("relevant_fragments", [])
+        print(f"📄 Fragmentos encontrados: {len(context_fragments)}")
         
         if not context_fragments:
+            print("⚠️ No se encontraron fragmentos relevantes")
             return ChatResponse(
                 question=request.question,
                 answer="No encontré información relevante en los documentos cargados para responder tu pregunta.",
@@ -116,10 +311,13 @@ async def chat_with_documents(request: ChatRequest):
             )
         
         # Generar respuesta con LLM (LangChain o Ollama directo)
+        print("🤖 Generando respuesta con LLM...")
         llm_response = local_llm_service.generate_contextual_response(
             question=request.question,
             context_fragments=context_fragments
         )
+        
+        print(f"✅ Respuesta LLM generada: {llm_response.get('method', 'unknown')}")
         
         # Preparar información de documentos relevantes
         relevant_docs = []
@@ -149,6 +347,10 @@ async def chat_with_documents(request: ChatRequest):
         )
         
     except Exception as e:
+        print(f"💥 Error en chat: {str(e)}")
+        print(f"🔍 Tipo de error: {type(e).__name__}")
+        import traceback
+        print(f"📋 Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error en chat: {str(e)}")
 
 @router.post("/chat/simple")

@@ -173,6 +173,148 @@ class VectorDatabase:
         except Exception as e:
             raise Exception(f"Error eliminando documento: {str(e)}")
     
+    def clear_all_documents(self) -> Dict[str, Any]:
+        """
+        Elimina todos los documentos de la base de datos.
+        
+        Returns:
+            Dict[str, Any]: Resultado de la operación
+        """
+        try:
+            if not self.connected:
+                return {"success": False, "error": "No conectado a la base de datos"}
+            
+            # Obtener estadísticas antes de eliminar
+            status_before = self.get_database_status()
+            total_before = status_before.get("total_chunks", 0)
+            
+            if total_before == 0:
+                return {
+                    "success": True,
+                    "message": "La base de datos ya estaba vacía",
+                    "documents_deleted": 0,
+                    "fragments_deleted": 0
+                }
+            
+            # Obtener todos los IDs
+            all_data = self.doc_collection.get()
+            all_ids = all_data.get("ids", [])
+            
+            if all_ids:
+                # Eliminar todos los documentos
+                self.doc_collection.delete(ids=all_ids)
+            
+            # Verificar que se eliminaron
+            status_after = self.get_database_status()
+            total_after = status_after.get("total_chunks", 0)
+            
+            return {
+                "success": True,
+                "message": f"Base de datos limpiada exitosamente",
+                "documents_deleted": "all",
+                "fragments_deleted": total_before - total_after
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Error limpiando base de datos: {str(e)}"
+            }
+    
+    def delete_fragments_by_ids(self, fragment_ids: List[str]) -> Dict[str, Any]:
+        """
+        Elimina fragmentos específicos por sus IDs.
+        
+        Args:
+            fragment_ids (List[str]): Lista de IDs de fragmentos a eliminar
+            
+        Returns:
+            Dict[str, Any]: Resultado de la operación
+        """
+        try:
+            if not self.connected:
+                return {"success": False, "error": "No conectado a la base de datos"}
+            
+            if not fragment_ids:
+                return {"success": False, "error": "No se proporcionaron IDs para eliminar"}
+            
+            # Verificar que existen los IDs
+            existing_data = self.doc_collection.get(ids=fragment_ids)
+            existing_ids = existing_data.get("ids", [])
+            
+            if not existing_ids:
+                return {
+                    "success": False,
+                    "error": "Ninguno de los IDs proporcionados existe"
+                }
+            
+            # Eliminar los fragmentos
+            self.doc_collection.delete(ids=existing_ids)
+            
+            return {
+                "success": True,
+                "message": f"Eliminados {len(existing_ids)} fragmentos",
+                "fragments_deleted": len(existing_ids),
+                "ids_deleted": existing_ids
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Error eliminando fragmentos: {str(e)}"
+            }
+    
+    def get_document_fragments_info(self, document_name: str) -> Dict[str, Any]:
+        """
+        Obtiene información detallada de fragmentos de un documento específico.
+        
+        Args:
+            document_name (str): Nombre del documento
+            
+        Returns:
+            Dict[str, Any]: Información de fragmentos del documento
+        """
+        try:
+            if not self.connected:
+                return {"success": False, "error": "No conectado a la base de datos"}
+            
+            # Buscar fragmentos por nombre de documento
+            document_chunks = self.doc_collection.get(
+                where={"filename": document_name},
+                include=["documents", "metadatas"]
+            )
+            
+            if not document_chunks["ids"]:
+                return {
+                    "success": False,
+                    "error": f"No se encontraron fragmentos para el documento '{document_name}'"
+                }
+            
+            fragments_info = []
+            for i, fragment_id in enumerate(document_chunks["ids"]):
+                content = document_chunks.get("documents", [""])[i] if i < len(document_chunks.get("documents", [])) else ""
+                metadata = document_chunks.get("metadatas", [{}])[i] if i < len(document_chunks.get("metadatas", [])) else {}
+                
+                fragments_info.append({
+                    "id": fragment_id,
+                    "content_preview": content[:100] + "..." if len(content) > 100 else content,
+                    "content_length": len(content),
+                    "metadata": metadata
+                })
+            
+            return {
+                "success": True,
+                "document_name": document_name,
+                "total_fragments": len(fragments_info),
+                "fragments": fragments_info
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Error obteniendo fragmentos del documento: {str(e)}"
+            }
+
     def get_all_documents_sample(self, limit: int = 20) -> List[Dict[str, Any]]:
         """
         Obtiene una muestra de documentos de la base de datos.
@@ -184,7 +326,7 @@ class VectorDatabase:
             List[Dict[str, Any]]: Lista de documentos con contenido y metadatos
         """
         try:
-            if not self.ensure_connection():
+            if not self.connected:
                 return []
             
             # Obtener documentos de la colección

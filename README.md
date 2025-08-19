@@ -2,17 +2,30 @@
 
 Un sistema completo de análisis de documentos PDF usando **IA local** con capacidades avanzadas de resumen, clasificación temática y chat conversacional.
 
+## 🚨 **Importante - Información Legal**
+
+> **⚠️ AVISO:** Este proyecto fue desarrollado como **prueba técnica** para demostración de habilidades.
+
+### 📋 **Términos de Uso:**
+- ✅ **Permitido:** Revisión técnica, evaluación, uso educativo
+- ❌ **NO Permitido:** Uso comercial sin licencia, integración en productos comerciales
+- 📧 **Licencia Comercial:** Disponible - Ver [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md)
+- 📜 **Licencia Completa:** Ver [LICENSE](LICENSE) para términos detallados
+
+### 👨‍💻 **Autoría:**
+Desarrollado íntegramente por **Cristian Soto** - © 2025  
+Ver [COPYRIGHT.md](COPYRIGHT.md) para información completa de derechos de autor.
+
+---
+
 ## 🏗️ Arquitectura del Sistema
 
 ```mermaid
 graph TB
-    subgraph "Frontend Layer"
+    subgraph "Frontend Layer - Minimalista"
         ST[Streamlit UI]
-        UP[Upload Page]
-        CH[Chat Page]
-        AS[Advanced Summary]
-        TC[Topic Classification]
-        CP[Comparisons]
+        MP[Main Page: Upload + Chat]
+        AP[Advanced Analysis]
     end
     
     subgraph "API Layer"
@@ -44,10 +57,28 @@ graph TB
     end
     
     ST --> FA
-    UP --> UR
-    CH --> CR
-    AS --> CR
-    TC --> CR
+    MP --> UR
+    MP --> CR
+    AP --> CR
+    
+    UR --> PDF
+    CR --> LLM
+    CR --> SUM
+    CR --> CLS
+    CR --> RET
+    
+    PDF --> EMB
+    EMB --> CHR
+    RET --> CHR
+    
+    LLM --> OLL
+    LLM --> LC
+    SUM --> OLL
+    CLS --> OLL
+    
+    CHR --> DOC
+    CHR --> VEC
+```
     CP --> CR
     
     UR --> PDF
@@ -72,12 +103,11 @@ graph TB
 ### Componentes Principales
 
 #### 🖥️ **Frontend (Streamlit)**
-- **Interfaz Web Intuitiva**: 6 páginas especializadas
-- **Upload de Documentos**: Procesamiento PDF en tiempo real
-- **Chat Conversacional**: Interfaz de preguntas y respuestas
-- **Resumen Avanzado**: 4 tipos de resumen configurables
-- **Clasificación de Temas**: Análisis automático por categorías
-- **Comparaciones**: Análisis comparativo entre documentos
+- **Interfaz Minimalista**: 2 páginas optimizadas para flujo de trabajo
+- **Upload + Chat Integrado**: Experiencia unificada y fluida
+- **Análisis Avanzado**: Funcionalidades especializadas en pestaña separada
+- **Diseño Responsive**: Layout adaptativo con columnas inteligentes
+- **Estado en Tiempo Real**: Indicadores de conexión y procesamiento
 
 #### ⚡ **Backend (FastAPI)**
 - **API RESTful**: 13 endpoints especializados

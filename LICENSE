@@ -1,0 +1,46 @@
+# Licencia MIT Modificada para Prueba Técnica
+
+Copyright (c) 2025 Cristian Soto
+
+## Uso Personal y Educativo
+
+Se concede permiso, libre de cargos, a cualquier persona que obtenga una copia de este software y de los archivos de documentación asociados (el "Software"), a utilizar el Software sin restricción para fines **no comerciales**, incluyendo sin limitación los derechos a usar, copiar, modificar, fusionar, publicar, distribuir y/o sublicenciar copias del Software.
+
+## Uso Comercial
+
+El uso comercial de este software requiere una licencia separada y el consentimiento explícito por escrito del autor. "Uso comercial" incluye pero no se limita a:
+
+- Uso en productos o servicios comerciales
+- Uso en organizaciones con fines de lucro  
+- Integración en sistemas de producción comerciales
+- Reventa o redistribución comercial
+- Uso en servicios web comerciales
+- Incorporación en productos de software comerciales
+
+## Condiciones
+
+- El aviso de copyright anterior y este aviso de permiso se incluirán en todas las copias o partes sustanciales del Software.
+- Cualquier uso comercial debe ser acordado previamente por escrito con el autor.
+- El software se proporciona "como está", sin garantía de ningún tipo, expresa o implícita.
+- En ningún caso los autores o propietarios de los derechos de autor serán responsables de ningún reclamo, daños u otras responsabilidades.
+
+## Contacto para Licencia Comercial
+
+Para solicitar una licencia comercial, contactar:
+- GitHub: @Cristian-Soto
+- Email: [Contactar vía GitHub]
+
+## Nota Importante
+
+Este proyecto fue desarrollado como parte de una **evaluación técnica** para demostrar habilidades en:
+- Desarrollo Full-Stack con Python
+- Integración de IA (Ollama/LLMs)
+- Arquitectura de Microservicios
+- Interfaces de Usuario Modernas
+- Gestión de Documentos y RAG
+
+Su uso está destinado para **demostración de capacidades técnicas** y evaluación profesional.
+
+---
+
+**DISCLAIMER:** Si este proyecto fue solicitado como "prueba técnica" por una empresa, el uso comercial posterior requiere negociación y licencia separada con el autor.

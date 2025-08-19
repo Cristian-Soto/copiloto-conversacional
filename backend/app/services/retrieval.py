@@ -43,6 +43,7 @@ class ContextualRetriever:
             
             # STEP 4: Generar respuesta estructurada
             return {
+                "success": True,
                 "query": query,
                 "context_found": len(processed_context) > 0,
                 "relevant_fragments": processed_context,
@@ -55,7 +56,14 @@ class ContextualRetriever:
             }
             
         except Exception as e:
-            raise Exception(f"Error en búsqueda contextual: {str(e)}")
+            return {
+                "success": False,
+                "error": f"Error en búsqueda contextual: {str(e)}",
+                "query": query,
+                "context_found": False,
+                "relevant_fragments": [],
+                "search_metadata": {}
+            }
     
     def _process_search_results(self, search_results: Dict[str, Any], 
                                threshold: float) -> List[Dict[str, Any]]:
@@ -79,8 +87,12 @@ class ContextualRetriever:
         distances = search_results.get('distances', [[]])[0]
         
         for i, document in enumerate(documents):
-            # Calcular similitud (1 - distancia)
-            similarity_score = 1 - distances[i] if i < len(distances) else 0
+            # Calcular similitud para distancia coseno
+            # ChromaDB devuelve distancias coseno, donde menor distancia = mayor similitud
+            distance = distances[i] if i < len(distances) else 2.0
+            # Para distancia coseno: similitud = (2 - distancia) / 2
+            # Esto mapea distancia 0 -> similitud 1.0, distancia 2 -> similitud 0.0
+            similarity_score = max(0, (2 - distance) / 2)
             
             # Filtrar por umbral de similitud
             if similarity_score >= threshold:

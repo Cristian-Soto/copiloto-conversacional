@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+===============================================
+Copiloto Conversacional - Backend API
+===============================================
+Copyright (c) 2025 Cristian Soto
+Desarrollado como prueba técnica
+
+Uso comercial requiere licencia separada.
+Ver LICENSE para términos completos.
+Contacto: https://github.com/Cristian-Soto
+===============================================
+"""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import upload, chat
