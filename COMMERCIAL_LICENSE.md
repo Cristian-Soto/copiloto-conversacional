@@ -74,7 +74,7 @@ Este software está disponible bajo **licencia comercial** para empresas y organ
 
 **Contacto:**
 - **GitHub:** [@Cristian-Soto](https://github.com/Cristian-Soto)
-- **LinkedIn:** [Perfil de LinkedIn]
+- **LinkedIn:** [@Cristian Soto Molina](https://www.linkedin.com/in/cristian-soto-molina/)
 - **Email:** Contactar vía GitHub Issues o LinkedIn
 
 ### 📋 Proceso de Licenciamiento
